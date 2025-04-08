@@ -57,14 +57,16 @@ The frontend is built with React, TypeScript, and Vite. It uses Tailwind CSS for
 
 ## Backend
 
-The backend is built with Python and likely uses a web framework such as Flask or FastAPI. It integrates with Ollama for AI-powered resume analysis and optimization.
+The backend is built with Python and likely uses a web framework such as Flask or FastAPI. It integrates with Gemini for AI-powered resume analysis and optimization.
+   ```bash
+   ```
 
 ### Technologies Used
 
 - Python
 - Virtual environment for dependency management
 - Pydantic for data validation
-- Ollama for AI capabilities
+- Gemini for AI capabilities
 
 ### Ollama Integration
 
@@ -86,18 +88,19 @@ The application uses Ollama to provide AI-powered features:
 2. Set up a virtual environment:
 
    ```bash
-   python -m venv env
+   python -m env resumeme
    ```
 
 3. Activate the virtual environment:
 
    - On Windows:
      ```bash
-     .\env\Scripts\activate
+     source resumeme/bin/activate
+
      ```
    - On macOS/Linux:
      ```bash
-     source env/bin/activate
+     source resumeme/bin/activate
      ```
 
 4. Install dependencies:

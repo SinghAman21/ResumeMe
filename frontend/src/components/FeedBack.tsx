@@ -5,7 +5,19 @@ import { CheckCircle, XCircle, AlertCircle, Award, Frown, Smile } from "lucide-r
 import { cn } from "@/lib/utils"
 
 interface ReviewFeedbackProps {
-  mode: "genuine" | "roast" // Type narrowing for safer usage
+  mode: "genuine" | "roast"
+  analysisData?: {
+    format: CategoryFeedback
+    content_quality: CategoryFeedback
+    skills_presentation: CategoryFeedback
+    ats_compatibility: CategoryFeedback
+  }
+}
+
+interface CategoryFeedback {
+  score: number
+  good_point: string
+  improvement_area: string
 }
 
 interface FeedbackItem {
@@ -15,82 +27,123 @@ interface FeedbackItem {
   improvement?: string
 }
 
-export default function ReviewFeedback({ mode }: ReviewFeedbackProps) {
+export default function ReviewFeedback({ mode, analysisData }: ReviewFeedbackProps) {
   const [loading, setLoading] = useState(true)
   const [overallScore, setOverallScore] = useState(0)
   const [feedback, setFeedback] = useState<FeedbackItem[]>([])
   const [animationComplete, setAnimationComplete] = useState(false)
 
   useEffect(() => {
-    // In production, this would fetch from an API instead of hardcoded data
     const timer = setTimeout(() => {
       setLoading(false)
 
-      const feedbackData = mode === "genuine" 
-        ? {
-            score: 78,
-            items: [
-              {
-                category: "Format & Layout",
-                score: 85,
-                feedback: "Your resume has a clean, professional layout that is easy to scan.",
-                improvement: "Consider adding more white space between sections for better readability.",
-              },
-              {
-                category: "Content Quality",
-                score: 75,
-                feedback: "Good use of action verbs and quantifiable achievements.",
-                improvement: "Be more specific about your impact in each role with metrics and results.",
-              },
-              {
-                category: "Skills Presentation",
-                score: 82,
-                feedback: "Relevant skills are highlighted effectively.",
-                improvement: "Group skills by category and emphasize those most relevant to your target roles.",
-              },
-              {
-                category: "ATS Compatibility",
-                score: 70,
-                feedback: "Your resume contains most keywords relevant to your field.",
-                improvement: "Add more industry-specific keywords to improve ATS performance.",
-              },
-            ]
+      if (analysisData) {
+        // Calculate overall score as average of all category scores
+        const scores = [
+          analysisData.format.score,
+          analysisData.content_quality.score,
+          analysisData.skills_presentation.score,
+          analysisData.ats_compatibility.score
+        ];
+        const avgScore = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length * 10); // Multiply by 10 as Gemini scores are 0-10
+
+        // Transform the analysis data to match our FeedbackItem structure
+        const transformedFeedback: FeedbackItem[] = [
+          {
+            category: "Format & Layout",
+            score: analysisData.format.score * 10,
+            feedback: analysisData.format.good_point,
+            improvement: analysisData.format.improvement_area
+          },
+          {
+            category: "Content Quality",
+            score: analysisData.content_quality.score * 10,
+            feedback: analysisData.content_quality.good_point,
+            improvement: analysisData.content_quality.improvement_area
+          },
+          {
+            category: "Skills Presentation",
+            score: analysisData.skills_presentation.score * 10,
+            feedback: analysisData.skills_presentation.good_point,
+            improvement: analysisData.skills_presentation.improvement_area
+          },
+          {
+            category: "ATS Compatibility",
+            score: analysisData.ats_compatibility.score * 10,
+            feedback: analysisData.ats_compatibility.good_point,
+            improvement: analysisData.ats_compatibility.improvement_area
           }
-        : {
-            score: 42,
-            items: [
-              {
-                category: "Format & Layout",
-                score: 35,
-                feedback: "Did you design this in MS Paint? Because it looks like you tried really hard... at making the most generic resume possible.",
-              },
-              {
-                category: "Content Quality",
-                score: 45,
-                feedback: "Ah yes, 'detail-oriented' and 'team player' - truly groundbreaking qualities that no other candidate has ever claimed before.",
-              },
-              {
-                category: "Skills Presentation",
-                score: 50,
-                feedback: "Proficient in Microsoft Office? Wow, you and literally everyone else who has touched a computer since 1995.",
-              },
-              {
-                category: "Overall Impact",
-                score: 38,
-                feedback: "This resume is so forgettable that hiring managers develop amnesia halfway through reading it.",
-              },
-            ]
-          };
+        ];
 
-      setOverallScore(feedbackData.score);
-      setFeedback(feedbackData.items);
+        setOverallScore(avgScore);
+        setFeedback(transformedFeedback);
+      } else {
+        // Fallback to demo data
+        const feedbackData = mode === "genuine" 
+          ? {
+              score: 78,
+              items: [
+                {
+                  category: "Format & Layout",
+                  score: 85,
+                  feedback: "Your resume has a clean, professional layout that is easy to scan.",
+                  improvement: "Consider adding more white space between sections for better readability.",
+                },
+                {
+                  category: "Content Quality",
+                  score: 75,
+                  feedback: "Good use of action verbs and quantifiable achievements.",
+                  improvement: "Be more specific about your impact in each role with metrics and results.",
+                },
+                {
+                  category: "Skills Presentation",
+                  score: 82,
+                  feedback: "Relevant skills are highlighted effectively.",
+                  improvement: "Group skills by category and emphasize those most relevant to your target roles.",
+                },
+                {
+                  category: "ATS Compatibility",
+                  score: 70,
+                  feedback: "Your resume contains most keywords relevant to your field.",
+                  improvement: "Add more industry-specific keywords to improve ATS performance.",
+                },
+              ]
+            }
+            : {
+              score: 42,
+              items: [
+                {
+                  category: "Format & Layout",
+                  score: 35,
+                  feedback: "Did you design this in MS Paint? Because it looks like you tried really hard... at making the most generic resume possible.",
+                },
+                {
+                  category: "Content Quality",
+                  score: 45,
+                  feedback: "Ah yes, 'detail-oriented' and 'team player' - truly groundbreaking qualities that no other candidate has ever claimed before.",
+                },
+                {
+                  category: "Skills Presentation",
+                  score: 50,
+                  feedback: "Proficient in Microsoft Office? Wow, you and literally everyone else who has touched a computer since 1995.",
+                },
+                {
+                  category: "Overall Impact",
+                  score: 38,
+                  feedback: "This resume is so forgettable that hiring managers develop amnesia halfway through reading it.",
+                },
+              ]
+            };
 
-      // Set animation complete after a delay to allow score counter to finish
+        setOverallScore(feedbackData.score);
+        setFeedback(feedbackData.items);
+      }
+
       setTimeout(() => setAnimationComplete(true), 1500);
     }, 2000);
 
     return () => clearTimeout(timer);
-  }, [mode]);
+  }, [mode, analysisData]);
 
   const getScoreColor = (score: number) => 
     score >= 80 ? "text-emerald-500 dark:text-emerald-400" :

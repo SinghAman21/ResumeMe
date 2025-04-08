@@ -11,6 +11,7 @@ export default function Home() {
 	const [isReviewing, setIsReviewing] = useState(false);
 	const [isReviewed, setIsReviewed] = useState(false);
 	const [reviewMode, setReviewMode] = useState<"genuine" | "roast">("genuine");
+	const [analysisData, setAnalysisData] = useState(null);
 
 	const handleFileUpload = (uploadedFile: File) => {
 		setFile(uploadedFile);
@@ -20,19 +21,25 @@ export default function Home() {
 	const handleRemoveFile = () => {
 		setFile(null);
 		setIsReviewed(false);
+		setAnalysisData(null);
 	};
 
-	const handleReview = () => {
+	const handleReview = async () => {
+		if (!file) return;
 		setIsReviewing(true);
-		// Simulate API call with timeout
-		setTimeout(() => {
+		try {
+			// The analysis data is already set by the Uploader component
 			setIsReviewing(false);
 			setIsReviewed(true);
-		}, 2000);
+		} catch (error) {
+			console.error("Error during review:", error);
+			setIsReviewing(false);
+		}
 	};
 
 	const handleReset = () => {
 		setIsReviewed(false);
+		setAnalysisData(null);
 	};
 
 	return (
@@ -82,10 +89,11 @@ export default function Home() {
 					<div className="space-y-6 mt-6">
 						{!file ? (
 							<div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-xl p-8 border border-zinc-200 dark:border-zinc-800">
-								<Uploader
-									onFileUpload={handleFileUpload}
-									activeTab={reviewMode}
-								/>
+								<Uploader 
+  onFileUpload={handleFileUpload} 
+  activeTab={reviewMode} 
+  setAnalysisData={setAnalysisData}
+/>
 							</div>
 						) : (
 							<div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-lg transition-all dark:border-zinc-800

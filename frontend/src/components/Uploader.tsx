@@ -4,16 +4,30 @@ import { useState, useRef } from "react"
 import { FileUp, Upload } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { uploadResume } from "@/api/start"
 
 interface ResumeUploaderProps {
   onFileUpload: (file: File) => void
   activeTab: string
+  setAnalysisData: (data: any) => void
 }
 
-export default function Uploader({ onFileUpload, activeTab }: ResumeUploaderProps) {
+export default function Uploader({ onFileUpload, activeTab, setAnalysisData }: ResumeUploaderProps) {
   const [isDragging, setIsDragging] = useState(false)
   const [isHovering, setIsHovering] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const handleFileUpload = async (file: File) => {
+    try {
+      const response = await uploadResume(file, activeTab);
+      if (response && response.analysis) {
+        setAnalysisData(response.analysis);
+        onFileUpload(file);
+      }
+    } catch (error) {
+      console.error("Error uploading file:", error);
+    }
+  };
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault()
@@ -24,27 +38,28 @@ export default function Uploader({ onFileUpload, activeTab }: ResumeUploaderProp
     setIsDragging(false)
   }
 
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragging(false)
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      await handleFileUpload(file);  // This automatically uploads the file when selected
+    }
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
 
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      const file = e.dataTransfer.files[0]
+      const file = e.dataTransfer.files[0];
       if (
         file.type === "application/pdf" ||
         file.type === "application/msword" ||
         file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
       ) {
-        onFileUpload(file)
+        await handleFileUpload(file);  // This automatically uploads the file when dropped
       }
     }
-  }
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      onFileUpload(e.target.files[0])
-    }
-  }
+  };
 
   const handleButtonClick = () => {
     if (fileInputRef.current) {
