@@ -6,12 +6,23 @@ import ModeToggle from "./components/ModeToggle";
 import Uploader from "./components/Uploader";
 import ReviewFeedback from "./components/FeedBack";
 
+export interface CategoryFeedback {
+	score: number;
+	good_point: string;
+	improvement_area: string;
+  }
+
 export default function Home() {
 	const [file, setFile] = useState<File | null>(null);
 	const [isReviewing, setIsReviewing] = useState(false);
 	const [isReviewed, setIsReviewed] = useState(false);
 	const [reviewMode, setReviewMode] = useState<"genuine" | "roast">("genuine");
-	const [analysisData, setAnalysisData] = useState(null);
+	const [analysisData, setAnalysisData] = useState<{
+		format: CategoryFeedback;
+		content_quality: CategoryFeedback;
+		skills_presentation: CategoryFeedback;
+		ats_compatibility: CategoryFeedback;
+	  } | null>(null);
 
 	const handleFileUpload = (uploadedFile: File) => {
 		setFile(uploadedFile);
@@ -188,7 +199,7 @@ export default function Home() {
 						{file && isReviewed && (
 							<>
 								<div className="mt-6 rounded-2xl overflow-hidden">
-									<ReviewFeedback mode={reviewMode} />
+<ReviewFeedback mode={reviewMode} analysisData={analysisData || undefined} />
 								</div>
 
 								<div className="flex justify-center my-6">

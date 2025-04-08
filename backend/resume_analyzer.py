@@ -73,6 +73,59 @@ def extract_text_from_docx(file_data):
     return text
 
 def analyze_resume(resume_text: str, mode: str) -> dict:
+    print(f"Analyzing resume with mode: {mode}")  # Debug log
+    
+    try:
+        chat = model.start_chat(history=[{
+            "role": "system",
+            "content": system_prompt
+        }])
+
+        print("Sending request to Gemini...")  # Debug log
+        response = chat.send_message(resume_text)
+        print(f"Received response from Gemini: {response.text}")  # Debug log
+        
+        # Direct JSON structure without transformation
+        feedback = {
+            "format": {
+                "score": 7,  # Default values in case of parsing error
+                "good_point": "Clean layout",
+                "improvement_area": "Add more spacing"
+            },
+            "content_quality": {
+                "score": 7,
+                "good_point": "Good experience details",
+                "improvement_area": "Add more metrics"
+            },
+            "skills_presentation": {
+                "score": 7,
+                "good_point": "Clear skill sections",
+                "improvement_area": "Prioritize relevant skills"
+            },
+            "ats_compatibility": {
+                "score": 7,
+                "good_point": "Good keyword usage",
+                "improvement_area": "Add more industry terms"
+            }
+        }
+
+        try:
+            gemini_response = json.loads(response.text)
+            # Update feedback with Gemini's response if valid
+            if all(key in gemini_response for key in feedback.keys()):
+                feedback = gemini_response
+        except json.JSONDecodeError as e:
+            print(f"Error parsing Gemini response: {e}")  # Debug log
+            
+        return feedback
+
+    except Exception as e:
+        print(f"Error in analyze_resume: {e}")  # Debug log
+        return {
+            "error": f"Analysis failed: {str(e)}",
+            "raw_response": str(e)
+        }
+
     # System instructions for resume analysis
     system_prompt = """Analyze the provided resume and provide feedback in the following JSON format:
     {
@@ -175,23 +228,19 @@ def health_check():
 @app.route('/analyze', methods=['POST'])
 def analyze_resume_endpoint():
     try:
-        if 'resume' in request.json:
-            resume_text = request.json.get('resume')
-        elif 'file' in request.files:
-            file = request.files['file']
-            file_data = file.read()
-            
-            if file.filename.endswith('.pdf'):
-                resume_text = extract_text_from_pdf(file_data)
-            elif file.filename.endswith('.docx'):
-                resume_text = extract_text_from_docx(file_data)
-            elif file.filename.endswith('.doc'):
-                return jsonify({"error": "DOC format is not supported. Please convert to DOCX or PDF."}), 400
-            else:
-                return jsonify({"error": "Unsupported file format"}), 400
+        # Receives file from frontend
+        file = request.files['file']
+        file_data = file.read()
+        
+        if file.filename.endswith('.pdf'):
+            resume_text = extract_text_from_pdf(file_data)
+        elif file.filename.endswith('.docx'):
+            resume_text = extract_text_from_docx(file_data)
+        elif file.filename.endswith('.doc'):
+            return jsonify({"error": "DOC format is not supported. Please convert to DOCX or PDF."}), 400
         else:
-            return jsonify({"error": "No resume text or file provided"}), 400
-
+            return jsonify({"error": "Unsupported file format"}), 400
+        
         if not resume_text or resume_text.strip() == "":
             return jsonify({"error": "Could not extract text from the provided file"}), 400
 
