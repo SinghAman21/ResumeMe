@@ -81,37 +81,58 @@ def analyze_resume(resume_text: str, mode: str) -> dict:
     print(resume_text[:200] + "...\n")
     
     # Fix the prompt string formatting
-    prompt = f"""You are a resume analyzer. Analyze this resume and provide feedback.
-Mode: {mode}
+    prompt = f"""You are a resume analyzer. Analyze this resume and provide feedback in both professional and humorous ways.
 Resume Text:
 {resume_text}
 
 Provide your analysis in this exact JSON format:
 {{
-    "format": {{
-        "score": anything between 0-10,
-        "good_point": "highlight a positive aspect of the format",
-        "improvement_area": "suggest one specific improvement"
+    "genuine": {{
+        "format": {{
+            "score": 7,
+            "good_point": "professional positive feedback about format",
+            "improvement_area": "professional suggestion for improvement"
+        }},
+        "content_quality": {{
+            "score": 7,
+            "good_point": "professional positive feedback about content",
+            "improvement_area": "professional suggestion for content"
+        }},
+        "skills_presentation": {{
+            "score": 7,
+            "good_point": "professional positive feedback about skills",
+            "improvement_area": "professional suggestion for skills"
+        }},
+        "ats_compatibility": {{
+            "score": 7,
+            "good_point": "professional positive feedback about ATS",
+            "improvement_area": "professional suggestion for ATS"
+        }}
     }},
-    "content_quality": {{
-        "score": anything between 0-10,
-        "good_point": "highlight effective content",
-        "improvement_area": "suggest content improvement"
-    }},
-    "skills_presentation": {{
-        "score": anything between 0-10,
-        "good_point": "positive aspect of skills presentation",
-        "improvement_area": "how to better present skills"
-    }},
-    "ats_compatibility": {{
-        "score": anything between 0-10,
-        "good_point": "positive ATS aspect",
-        "improvement_area": "ATS improvement suggestion"
+    "roast": {{
+        "format": {{
+            "score": anything between 0-10,
+            "good_point": "humorous positive feedback about format",
+            "improvement_area": "humorous suggestion for improvement"
+        }},
+        "content_quality": {{
+            "score": anything between 0-10,
+            "good_point": "humorous positive feedback about content",
+            "improvement_area": "humorous suggestion for content"
+        }},
+        "skills_presentation": {{
+            "score": anything between 0-10,
+            "good_point": "humorous positive feedback about skills",
+            "improvement_area": "humorous suggestion for skills"
+        }},
+        "ats_compatibility": {{
+            "score": anything between 0-10,
+            "good_point": "humorous positive feedback about ATS",
+            "improvement_area": "humorous suggestion for ATS"
+        }}
     }}
 }}
 
-If mode is "genuine": Be professional and constructive
-If mode is "roast": Be humorously critical while being helpful
 Keep scores between 0-10 and feedback concise."""
 
     try:
@@ -223,14 +244,18 @@ Keep scores between 0-10 and feedback concise."""
 
 def validate_scores(feedback: dict) -> bool:
     """Validate that all scores are integers between 0 and 10"""
+    modes = ["genuine", "roast"]
     categories = ["format", "content_quality", "skills_presentation", "ats_compatibility"]
     
-    for category in categories:
-        if category not in feedback:
+    for mode in modes:
+        if mode not in feedback:
             return False
-        score = feedback[category].get("score")
-        if not isinstance(score, (int, float)) or score < 0 or score > 10:
-            return False
+        for category in categories:
+            if category not in feedback[mode]:
+                return False
+            score = feedback[mode][category].get("score")
+            if not isinstance(score, (int, float)) or score < 0 or score > 10:
+                return False
     
     return True
 
@@ -257,13 +282,12 @@ def analyze_resume_endpoint():
         if not resume_text or resume_text.strip() == "":
             return jsonify({"error": "Could not extract text from the provided file"}), 400
 
-        mode = request.form.get('mode', 'genuine')
-        analysis_result = analyze_resume(resume_text, mode)  # Fixed: Pass both parameters
+        analysis_result = analyze_resume(resume_text, "both")  # We'll ignore the mode parameter since we're getting both
         
         return jsonify({"analysis": analysis_result})
 
     except Exception as e:
-        print(f"Error in endpoint: {str(e)}")  # Keep debug log
+        print(f"Error in endpoint: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
