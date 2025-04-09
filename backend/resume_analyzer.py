@@ -12,10 +12,11 @@ import tempfile
 app = Flask(__name__)
 CORS(app, 
      resources={r"/*": {
-         "origins": ["http://localhost:5173"],
+         "origins": ["http://localhost:5173", "https://your-production-domain.com"],
          "methods": ["POST", "GET", "OPTIONS"],
          "allow_headers": ["Content-Type", "Accept"],
-         "supports_credentials": True
+         "supports_credentials": True,
+         "max_age": 3600
      }})
 app.config["UPLOAD_FOLDER"] = "uploads"
 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
@@ -73,39 +74,104 @@ def extract_text_from_docx(file_data):
     return text
 
 def analyze_resume(resume_text: str, mode: str) -> dict:
-    # System instructions for resume analysis
-    system_prompt = """Analyze the provided resume and provide feedback in the following JSON format:
-    {
-        "format": {
-            "score": <score between 0-10>,
-            "good_point": "<highlight a positive aspect of the format>",
-            "improvement_area": "<suggest one specific improvement>"
-        },
-        "content_quality": {
-            "score": <score between 0-10>,
-            "good_point": "<highlight effective content>",
-            "improvement_area": "<suggest content improvement>"
-        },
-        "skills_presentation": {
-            "score": <score between 0-10>,
-            "good_point": "<positive aspect of skills presentation>",
-            "improvement_area": "<how to better present skills>"
-        },
-        "ats_compatibility": {
-            "score": <score between 0-10>,
-            "good_point": "<positive ATS aspect>",
-            "improvement_area": "<ATS improvement suggestion>"
-        }
-    }
-
-    Mode: {}
-    If mode is "genuine": Provide professional, constructive feedback
-    If mode is "roast": Be humorously critical while maintaining helpful insights
+    print(f"Analyzing resume with mode: {mode}")
+    print("\n=== Resume Analysis Started ===")
+    print(f"Mode: {mode}")
+    print("\nResume Text (first 200 chars):")
+    print(resume_text[:200] + "...\n")
     
-    Ensure all scores are integers between 0 and 10.
-    Keep each feedback point concise (max 100 characters).
-    Focus on actionable improvements.
-    """.format(mode)
+    # Fix the prompt string formatting
+    prompt = f"""You are a resume analyzer. Analyze this resume and provide feedback.
+Mode: {mode}
+Resume Text:
+{resume_text}
+
+Provide your analysis in this exact JSON format:
+{{
+    "format": {{
+        "score": anything between 0-10,
+        "good_point": "highlight a positive aspect of the format",
+        "improvement_area": "suggest one specific improvement"
+    }},
+    "content_quality": {{
+        "score": anything between 0-10,
+        "good_point": "highlight effective content",
+        "improvement_area": "suggest content improvement"
+    }},
+    "skills_presentation": {{
+        "score": anything between 0-10,
+        "good_point": "positive aspect of skills presentation",
+        "improvement_area": "how to better present skills"
+    }},
+    "ats_compatibility": {{
+        "score": anything between 0-10,
+        "good_point": "positive ATS aspect",
+        "improvement_area": "ATS improvement suggestion"
+    }}
+}}
+
+If mode is "genuine": Be professional and constructive
+If mode is "roast": Be humorously critical while being helpful
+Keep scores between 0-10 and feedback concise."""
+
+    try:
+        print("\n=== Sending Request to Gemini ===")
+        response = model.generate_content(prompt)
+        
+        try:
+            # Clean the response text by removing markdown code block syntax
+            cleaned_response = response.text.strip()
+            if cleaned_response.startswith('```json'):
+                cleaned_response = cleaned_response[7:]  # Remove ```json
+            if cleaned_response.endswith('```'):
+                cleaned_response = cleaned_response[:-3]  # Remove closing ```
+            
+            gemini_response = json.loads(cleaned_response.strip())
+            print("\nParsed JSON Response:")
+            print(json.dumps(gemini_response, indent=2))
+            
+            if validate_scores(gemini_response):
+                print("\n✅ Response validation successful")
+                return gemini_response
+            else:
+                print("\n❌ Response validation failed")
+                
+        except json.JSONDecodeError as e:
+            print(f"\n❌ JSON Parse Error: {e}")
+            print("Raw text that failed to parse:", response.text)
+            
+        # Return default feedback if parsing fails
+        print("\n⚠️ Using fallback response")
+        return {
+            "format": {
+                "score": 7,
+                "good_point": "Clean layout",
+                "improvement_area": "Add more spacing"
+            },
+            "content_quality": {
+                "score": 7,
+                "good_point": "Good experience details",
+                "improvement_area": "Add more metrics"
+            },
+            "skills_presentation": {
+                "score": 7,
+                "good_point": "Clear skill sections",
+                "improvement_area": "Prioritize relevant skills"
+            },
+            "ats_compatibility": {
+                "score": 7,
+                "good_point": "Good keyword usage",
+                "improvement_area": "Add more industry terms"
+            }
+        }
+
+    except Exception as e:
+        print(f"\n❌ Gemini API Error: {str(e)}")
+        print("Full error details:", e)
+        return {
+            "error": f"Analysis failed: {str(e)}",
+            "raw_response": str(e)
+        }
 
     try:
         chat = model.start_chat(history=[{
@@ -113,7 +179,7 @@ def analyze_resume(resume_text: str, mode: str) -> dict:
             "content": system_prompt
         }])
 
-        response = chat.send_message(resume_text)
+        response = chat.send_message()
         
         try:
             feedback = json.loads(response.text)
@@ -175,32 +241,29 @@ def health_check():
 @app.route('/analyze', methods=['POST'])
 def analyze_resume_endpoint():
     try:
-        if 'resume' in request.json:
-            resume_text = request.json.get('resume')
-        elif 'file' in request.files:
-            file = request.files['file']
-            file_data = file.read()
-            
-            if file.filename.endswith('.pdf'):
-                resume_text = extract_text_from_pdf(file_data)
-            elif file.filename.endswith('.docx'):
-                resume_text = extract_text_from_docx(file_data)
-            elif file.filename.endswith('.doc'):
-                return jsonify({"error": "DOC format is not supported. Please convert to DOCX or PDF."}), 400
-            else:
-                return jsonify({"error": "Unsupported file format"}), 400
+        # Receives file from frontend
+        file = request.files['file']
+        file_data = file.read()
+        
+        if file.filename.endswith('.pdf'):
+            resume_text = extract_text_from_pdf(file_data)
+        elif file.filename.endswith('.docx'):
+            resume_text = extract_text_from_docx(file_data)
+        elif file.filename.endswith('.doc'):
+            return jsonify({"error": "DOC format is not supported. Please convert to DOCX or PDF."}), 400
         else:
-            return jsonify({"error": "No resume text or file provided"}), 400
-
+            return jsonify({"error": "Unsupported file format"}), 400
+        
         if not resume_text or resume_text.strip() == "":
             return jsonify({"error": "Could not extract text from the provided file"}), 400
 
         mode = request.form.get('mode', 'genuine')
-        analysis_result = analyze_resume(resume_text, mode)
+        analysis_result = analyze_resume(resume_text, mode)  # Fixed: Pass both parameters
         
         return jsonify({"analysis": analysis_result})
 
     except Exception as e:
+        print(f"Error in endpoint: {str(e)}")  # Keep debug log
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':

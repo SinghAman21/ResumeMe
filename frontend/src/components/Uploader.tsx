@@ -18,14 +18,21 @@ export default function Uploader({ onFileUpload, activeTab, setAnalysisData }: R
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleFileUpload = async (file: File) => {
+    console.log('Starting file upload...', file.name);  // Debug log
     try {
       const response = await uploadResume(file, activeTab);
+      console.log('Upload response:', response);  // Debug log
+      
       if (response && response.analysis) {
         setAnalysisData(response.analysis);
         onFileUpload(file);
+      } else {
+        console.error('Invalid response format:', response);  // Debug log
+        throw new Error('Invalid response from server');
       }
     } catch (error) {
-      console.error("Error uploading file:", error);
+      console.error('Error in handleFileUpload:', error);  // Debug log
+      // Show error to user (you might want to add a toast notification here)
     }
   };
 
