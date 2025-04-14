@@ -8,10 +8,20 @@ import { cn } from "@/lib/utils"
 interface ReviewFeedbackProps {
   mode: "genuine" | "roast"
   analysisData?: {
-    format: CategoryFeedback
-    content_quality: CategoryFeedback
-    skills_presentation: CategoryFeedback
-    ats_compatibility: CategoryFeedback
+    genuine: {
+      overall_review: string
+      format: CategoryFeedback
+      content_quality: CategoryFeedback
+      skills_presentation: CategoryFeedback
+      ats_compatibility: CategoryFeedback
+    }
+    roast: {
+      overall_review: string
+      format: CategoryFeedback
+      content_quality: CategoryFeedback
+      skills_presentation: CategoryFeedback
+      ats_compatibility: CategoryFeedback
+    }
   }
 }
 
@@ -41,12 +51,14 @@ export default function ReviewFeedback({ mode, analysisData }: ReviewFeedbackPro
       setLoading(false)
 
       if (analysisData) {
-        // Calculate overall score
+        const currentModeData = analysisData[mode];
+        
+        // Calculate overall score for current mode
         const scores = [
-          analysisData.format.score,
-          analysisData.content_quality.score,
-          analysisData.skills_presentation.score,
-          analysisData.ats_compatibility.score
+          currentModeData.format.score,
+          currentModeData.content_quality.score,
+          currentModeData.skills_presentation.score,
+          currentModeData.ats_compatibility.score
         ];
         const avgScore = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length * 10);
 
@@ -54,27 +66,27 @@ export default function ReviewFeedback({ mode, analysisData }: ReviewFeedbackPro
         const transformedFeedback: FeedbackItem[] = [
           {
             category: "Format & Layout",
-            score: analysisData.format.score * 10,
-            feedback: analysisData.format.good_point,
-            improvement: analysisData.format.improvement_area
+            score: currentModeData.format.score * 10,
+            feedback: currentModeData.format.good_point,
+            improvement: currentModeData.format.improvement_area
           },
           {
             category: "Content Quality",
-            score: analysisData.content_quality.score * 10,
-            feedback: analysisData.content_quality.good_point,
-            improvement: analysisData.content_quality.improvement_area
+            score: currentModeData.content_quality.score * 10,
+            feedback: currentModeData.content_quality.good_point,
+            improvement: currentModeData.content_quality.improvement_area
           },
           {
             category: "Skills Presentation",
-            score: analysisData.skills_presentation.score * 10,
-            feedback: analysisData.skills_presentation.good_point,
-            improvement: analysisData.skills_presentation.improvement_area
+            score: currentModeData.skills_presentation.score * 10,
+            feedback: currentModeData.skills_presentation.good_point,
+            improvement: currentModeData.skills_presentation.improvement_area
           },
           {
             category: "ATS Compatibility",
-            score: analysisData.ats_compatibility.score * 10,
-            feedback: analysisData.ats_compatibility.good_point,
-            improvement: analysisData.ats_compatibility.improvement_area
+            score: currentModeData.ats_compatibility.score * 10,
+            feedback: currentModeData.ats_compatibility.good_point,
+            improvement: currentModeData.ats_compatibility.improvement_area
           }
         ];
 
@@ -154,6 +166,22 @@ export default function ReviewFeedback({ mode, analysisData }: ReviewFeedbackPro
       animate={{ opacity: 1 }}
       className="space-y-8"
     >
+      {/* Overall Review */}
+      {analysisData && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center"
+        >
+          <p className={cn(
+            "text-lg font-medium italic",
+            mode === "roast" ? "text-rose-500 dark:text-rose-400" : "text-emerald-500 dark:text-emerald-400"
+          )}>
+            "{analysisData[mode].overall_review}"
+          </p>
+        </motion.div>
+      )}
+
       {/* Score Display */}
       <motion.div className="relative overflow-hidden rounded-xl border p-8 text-center">
         <div className="relative z-10">
