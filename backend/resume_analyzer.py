@@ -88,6 +88,7 @@ Resume Text:
 Provide your analysis in this exact JSON format:
 {{
     "genuine": {{
+        "overall_review": "Brief professional summary of the resume",
         "format": {{
             "score": 7,
             "good_point": "professional positive feedback about format",
@@ -110,6 +111,7 @@ Provide your analysis in this exact JSON format:
         }}
     }},
     "roast": {{
+        "overall_review": "Humorous one-liner about the resume",
         "format": {{
             "score": anything between 0-10,
             "good_point": "humorous positive feedback about format",
@@ -133,7 +135,7 @@ Provide your analysis in this exact JSON format:
     }}
 }}
 
-Keep scores between 0-10 and feedback concise."""
+Keep scores between 0-10, feedback concise, and overall_review under 100 characters."""
 
     try:
         print("\n=== Sending Request to Gemini ===")
@@ -249,6 +251,8 @@ def validate_scores(feedback: dict) -> bool:
     
     for mode in modes:
         if mode not in feedback:
+            return False
+        if "overall_review" not in feedback[mode]:
             return False
         for category in categories:
             if category not in feedback[mode]:

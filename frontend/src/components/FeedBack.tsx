@@ -9,12 +9,14 @@ interface ReviewFeedbackProps {
   mode: "genuine" | "roast"
   analysisData?: {
     genuine: {
+      overall_review: string
       format: CategoryFeedback
       content_quality: CategoryFeedback
       skills_presentation: CategoryFeedback
       ats_compatibility: CategoryFeedback
     }
     roast: {
+      overall_review: string
       format: CategoryFeedback
       content_quality: CategoryFeedback
       skills_presentation: CategoryFeedback
@@ -164,6 +166,22 @@ export default function ReviewFeedback({ mode, analysisData }: ReviewFeedbackPro
       animate={{ opacity: 1 }}
       className="space-y-8"
     >
+      {/* Overall Review */}
+      {analysisData && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center"
+        >
+          <p className={cn(
+            "text-lg font-medium italic",
+            mode === "roast" ? "text-rose-500 dark:text-rose-400" : "text-emerald-500 dark:text-emerald-400"
+          )}>
+            "{analysisData[mode].overall_review}"
+          </p>
+        </motion.div>
+      )}
+
       {/* Score Display */}
       <motion.div className="relative overflow-hidden rounded-xl border p-8 text-center">
         <div className="relative z-10">
