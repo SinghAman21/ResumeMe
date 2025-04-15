@@ -90,22 +90,22 @@ Provide your analysis in this exact JSON format:
     "genuine": {{
         "overall_review": "Brief professional summary of the resume",
         "format": {{
-            "score": 7,
+            "score": anything between 0-10,
             "good_point": "professional positive feedback about format",
             "improvement_area": "professional suggestion for improvement"
         }},
         "content_quality": {{
-            "score": 7,
+            "score": anything between 0-10,
             "good_point": "professional positive feedback about content",
             "improvement_area": "professional suggestion for content"
         }},
         "skills_presentation": {{
-            "score": 7,
+            "score": anything between 0-10,
             "good_point": "professional positive feedback about skills",
             "improvement_area": "professional suggestion for skills"
         }},
         "ats_compatibility": {{
-            "score": 7,
+            "score": anything between 0-10,
             "good_point": "professional positive feedback about ATS",
             "improvement_area": "professional suggestion for ATS"
         }}
