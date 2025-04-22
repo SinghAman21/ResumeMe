@@ -1,41 +1,35 @@
-export const uploadResume = async (file: File, mode: string) => {
-  console.log('Uploading resume...', { fileName: file.name, mode });  // Debug log
-  
-  const formData = new FormData();
-  formData.append('file', file);
-  formData.append('mode', mode);
-  
+import { AnalysisData } from "../App";
+
+export async function uploadResume(file: File, mode: string): Promise<{ analysis: AnalysisData }> {
   try {
-    const response = await fetch('http://localhost:5000/analyze', {
-      method: 'POST',
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("mode", mode);
+
+    const response = await fetch("http://localhost:5000/analyze", {
+      method: "POST",
       body: formData,
-      credentials: 'include',
-      signal: AbortSignal.timeout(60000), // 60 second timeout
     });
 
-    console.log('Response status:', response.status);  // Debug log
-
     if (!response.ok) {
-      const errorData = await response.json().catch(() => null);
-      console.error('Error response:', errorData);  // Debug log
-      throw new Error(
-        errorData?.error || 
-        `Server error (${response.status}): Please ensure the backend server is running on port 5000`
-      );
+      const errorData = await response.json();
+      throw new Error(errorData.error || "Failed to analyze resume");
     }
 
     const data = await response.json();
-    console.log('Received data:', data);  // Debug log
+    
+    // Validate that the response has the expected structure
+    if (!data.analysis || 
+        !data.analysis.genuine || 
+        !data.analysis.roast || 
+        !data.analysis.genuine.overall_review || 
+        !data.analysis.roast.overall_review) {
+      throw new Error("Invalid response format from server");
+    }
+    
     return data;
   } catch (error) {
-    console.error('Upload error:', error);  // Debug log
-    if (error instanceof Error) {
-      if (error.name === 'AbortError') {
-        throw new Error('Request timed out. Please check if the backend server is running.');
-      } else if (error.message.includes('Failed to fetch')) {
-        throw new Error('Could not connect to the server. Please ensure the backend is running on http://localhost:5000');
-      }
-    }
+    console.error("Error in uploadResume:", error);
     throw error;
   }
-};
+}

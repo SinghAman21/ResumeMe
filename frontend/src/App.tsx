@@ -10,19 +10,32 @@ export interface CategoryFeedback {
 	score: number;
 	good_point: string;
 	improvement_area: string;
-  }
+}
+
+// Define the analysis data structure that matches the ReviewFeedback component's expectations
+export interface AnalysisData {
+  genuine: {
+    overall_review: string;
+    format: CategoryFeedback;
+    content_quality: CategoryFeedback;
+    skills_presentation: CategoryFeedback;
+    ats_compatibility: CategoryFeedback;
+  };
+  roast: {
+    overall_review: string;
+    format: CategoryFeedback;
+    content_quality: CategoryFeedback;
+    skills_presentation: CategoryFeedback;
+    ats_compatibility: CategoryFeedback;
+  };
+}
 
 export default function Home() {
 	const [file, setFile] = useState<File | null>(null);
 	const [isReviewing, setIsReviewing] = useState(false);
 	const [isReviewed, setIsReviewed] = useState(false);
 	const [reviewMode, setReviewMode] = useState<"genuine" | "roast">("genuine");
-	const [analysisData, setAnalysisData] = useState<{
-		format: CategoryFeedback;
-		content_quality: CategoryFeedback;
-		skills_presentation: CategoryFeedback;
-		ats_compatibility: CategoryFeedback;
-	  } | null>(null);
+	const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null);
 
 	const handleFileUpload = (uploadedFile: File) => {
 		setFile(uploadedFile);
@@ -199,7 +212,7 @@ export default function Home() {
 						{file && isReviewed && (
 							<>
 								<div className="mt-6 rounded-2xl overflow-hidden">
-<ReviewFeedback mode={reviewMode} analysisData={analysisData || undefined} />
+									<ReviewFeedback mode={reviewMode} analysisData={analysisData} />
 								</div>
 
 								<div className="flex justify-center my-6">
