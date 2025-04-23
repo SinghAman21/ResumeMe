@@ -212,6 +212,7 @@ export default function Home() {
 						{file && isReviewed && (
 							<>
 								<div className="mt-6 rounded-2xl overflow-hidden">
+									
 									<ReviewFeedback mode={reviewMode} analysisData={analysisData} />
 								</div>
 

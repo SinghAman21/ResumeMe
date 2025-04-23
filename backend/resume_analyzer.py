@@ -15,7 +15,10 @@ CORS(
     app,
     resources={
         r"/*": {
-            "origins": ["http://localhost:5173", "http://127.0.0.1:5173", "https://your-production-domain.com"],
+            "origins": [
+                "http://localhost:5173",
+                "http://127.0.0.1:5173",
+            ],
             "methods": ["POST", "GET", "OPTIONS"],
             "allow_headers": ["Content-Type", "Accept"],
             "supports_credentials": True,
@@ -30,10 +33,11 @@ os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 load_dotenv()
 api_key = os.environ.get("GEMINI_API_KEY")
 if not api_key:
-    raise ValueError("GEMINI_API_KEY not found in environment variables. Please check your .env file.")
+    raise ValueError(
+        "GEMINI_API_KEY not found in environment variables. Please check your .env file."
+    )
 genai.configure(api_key=api_key)
 
-# Configure the model
 generation_config = {
     "temperature": 0.7,
     "top_p": 0.95,
@@ -41,7 +45,6 @@ generation_config = {
     "max_output_tokens": 8192,
 }
 
-# Initialize the model
 model = genai.GenerativeModel(
     model_name="gemini-1.5-flash",
     generation_config=generation_config,
@@ -58,7 +61,7 @@ def extract_text_from_pdf(file_data):
         with pdfplumber.open(temp_file_path) as pdf:
             for page in pdf.pages:
                 page_text = page.extract_text()
-                if page_text:  # Check if text extraction was successful
+                if page_text:
                     text += page_text + "\n"
     except Exception as e:
         print(f"Error extracting PDF text: {e}")
@@ -85,7 +88,6 @@ def extract_text_from_docx(file_data):
         print(f"Error extracting DOCX text: {e}")
         traceback.print_exc()
     finally:
-        # Clean up the temporary file
         if os.path.exists(temp_file_path):
             os.unlink(temp_file_path)
 
@@ -99,7 +101,6 @@ def analyze_resume(resume_text: str, mode: str) -> dict:
     # print("\nResume Text (first 200 chars):")
     # print(resume_text[:200] + "...\n")
 
-    # Enhanced prompt with instructions for more detailed feedback
     prompt = f"""You are a professional resume analyzer with extensive HR and recruiting experience. Analyze this resume and provide detailed, actionable feedback in both professional and humorous ways.
 
 Resume Text:
@@ -161,19 +162,22 @@ Keep scores between 0-10, with 0 being terrible and 10 being perfect. Make feedb
 
     try:
         print("\n=== Sending Request to Gemini ===")
-        # Increase max output tokens to accommodate longer responses
         response = model.generate_content(
             prompt,
-            generation_config={"temperature": 0.7, "top_p": 0.95, "top_k": 40, "max_output_tokens": 12000},
+            generation_config={
+                "temperature": 0.7,
+                "top_p": 0.95,
+                "top_k": 40,
+                "max_output_tokens": 12000,
+            },
         )
 
         try:
-            # Clean the response text by removing markdown code block syntax
             cleaned_response = response.text.strip()
             if cleaned_response.startswith("```json"):
-                cleaned_response = cleaned_response[7:]  # Remove ```json
+                cleaned_response = cleaned_response[7:] 
             if cleaned_response.endswith("```"):
-                cleaned_response = cleaned_response[:-3]  # Remove closing ```
+                cleaned_response = cleaned_response[:-3]  
 
             gemini_response = json.loads(cleaned_response.strip())
             print("\nParsed JSON Response:")
@@ -195,7 +199,7 @@ Keep scores between 0-10, with 0 being terrible and 10 being perfect. Make feedb
         print(f"\n❌ Gemini API Error: {str(e)}")
         print("Full error details:", e)
         traceback.print_exc()
-        
+
         # Return default feedback if parsing fails with proper structure
         print("\n⚠️ Using fallback response")
         return {
@@ -244,7 +248,7 @@ Keep scores between 0-10, with 0 being terrible and 10 being perfect. Make feedb
                     "good_point": "ATS might actually find this document",
                     "improvement_area": "Try keywords that aren't from 1995",
                 },
-            }
+            },
         }
 
 
@@ -284,16 +288,16 @@ def analyze_resume_endpoint():
         # Check if file is present in request
         if "file" not in request.files:
             return jsonify({"error": "No file part in the request"}), 400
-            
+
         file = request.files["file"]
-        
+
         # Check if file has a name
         if file.filename == "":
             return jsonify({"error": "No file selected for uploading"}), 400
-            
+
         # Read the file data
         file_data = file.read()
-        
+
         # Check if file has content
         if not file_data:
             return jsonify({"error": "Empty file uploaded"}), 400
@@ -304,18 +308,26 @@ def analyze_resume_endpoint():
         elif file.filename.lower().endswith(".docx"):
             resume_text = extract_text_from_docx(file_data)
         elif file.filename.lower().endswith(".doc"):
-            return jsonify(
-                {"error": "DOC format is not supported. Please convert to DOCX or PDF."}
-            ), 400
+            return (
+                jsonify(
+                    {
+                        "error": "DOC format is not supported. Please convert to DOCX or PDF."
+                    }
+                ),
+                400,
+            )
         else:
             return jsonify({"error": f"Unsupported file format: {file.filename}"}), 400
 
         if not resume_text or resume_text.strip() == "":
-            return jsonify({"error": "Could not extract text from the provided file"}), 400
+            return (
+                jsonify({"error": "Could not extract text from the provided file"}),
+                400,
+            )
 
         # Get analysis mode (default to "both")
         mode = request.form.get("mode", "both")
-        
+
         # Analyze resume
         analysis_result = analyze_resume(resume_text, mode)
 
