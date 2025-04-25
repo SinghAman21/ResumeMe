@@ -9,7 +9,6 @@ import docx
 import tempfile
 import traceback
 
-# Initialize Flask app
 app = Flask(__name__)
 CORS(
     app,
@@ -26,10 +25,10 @@ CORS(
         }
     },
 )
+
 app.config["UPLOAD_FOLDER"] = "uploads"
 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
-# Load environment variables and configure Gemini
 load_dotenv()
 api_key = os.environ.get("GEMINI_API_KEY")
 if not api_key:
@@ -175,9 +174,9 @@ Keep scores between 0-10, with 0 being terrible and 10 being perfect. Make feedb
         try:
             cleaned_response = response.text.strip()
             if cleaned_response.startswith("```json"):
-                cleaned_response = cleaned_response[7:] 
+                cleaned_response = cleaned_response[7:]
             if cleaned_response.endswith("```"):
-                cleaned_response = cleaned_response[:-3]  
+                cleaned_response = cleaned_response[:-3]
 
             gemini_response = json.loads(cleaned_response.strip())
             print("\nParsed JSON Response:")

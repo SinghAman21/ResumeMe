@@ -59,7 +59,6 @@ export default function Uploader({
 		setProgress(0);
 		setUploadedFileName(file.name);
 
-		// Simulate upload progress with smoother animation
 		const progressInterval = setInterval(() => {
 			setProgress((prev) => {
 				const increment = Math.random() * 10;
@@ -1001,7 +1000,9 @@ export default function Uploader({
 			/>
 
 			{/* Add some CSS for animations */}
-			<style dangerouslySetInnerHTML={{__html: `
+			<style
+				dangerouslySetInnerHTML={{
+					__html: `
 				@keyframes gradientMove {
 					0% {
 						background-position: 0% 50%;
@@ -1058,7 +1059,9 @@ export default function Uploader({
 						transform: translate(0px, 0px) scale(1);
 					}
 				}
-			`}} />
+			`,
+				}}
+			/>
 		</div>
 	);
 }

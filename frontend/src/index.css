@@ -114,7 +114,7 @@
 
 @layer base {
 	* {
-		@apply font-sans border-border outline-ring/50;
+		@apply font-sans border-border outline-ring/50 ;
 	}
 	body {
 		/* background: url("/bg.jpg") no-repeat center center fixed; */

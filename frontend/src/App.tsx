@@ -12,7 +12,6 @@ export interface CategoryFeedback {
 	improvement_area: string;
 }
 
-// Define the analysis data structure that matches the ReviewFeedback component's expectations
 export interface AnalysisData {
   genuine: {
     overall_review: string;
@@ -52,7 +51,6 @@ export default function Home() {
 		if (!file) return;
 		setIsReviewing(true);
 		try {
-			// The analysis data is already set by the Uploader component
 			setIsReviewing(false);
 			setIsReviewed(true);
 		} catch (error) {
