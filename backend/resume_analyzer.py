@@ -278,12 +278,12 @@ def validate_scores(feedback: dict) -> bool:
     return True
 
 
-@app.route("/analyze", methods=["GET"])
+@app.route("/", methods=["GET"])
 def health_check():
     return jsonify({"status": "healthy", "message": "Backend is running"}), 200
 
 
-@app.route("/analyze", methods=["POST"])
+@app.route("/", methods=["POST"])
 def analyze_resume_endpoint():
     try:
         # Check if file is present in request
