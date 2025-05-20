@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils"
 
 interface ReviewFeedbackProps {
   mode: "genuine" | "roast"
-  analysisData?: {
+  analysisData: {
     genuine: {
       overall_review: string
       format: CategoryFeedback
@@ -21,7 +21,7 @@ interface ReviewFeedbackProps {
       skills_presentation: CategoryFeedback
       ats_compatibility: CategoryFeedback
     }
-  }
+  } | null // Change from undefined to null to match App.tsx type
 }
 
 interface CategoryFeedback {
@@ -628,7 +628,7 @@ export default function ReviewFeedback({ mode, analysisData }: ReviewFeedbackPro
           </Button>
         </motion.div>
         
-        <style jsx global>{`
+        <style>{`
           .stop-color-blue-500 { stop-color: rgb(59, 130, 246); }
           .stop-color-indigo-600 { stop-color: rgb(79, 70, 229); }
           .stop-color-rose-500 { stop-color: rgb(244, 63, 94); }
