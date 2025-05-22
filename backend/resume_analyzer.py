@@ -19,6 +19,7 @@ CORS(
                 "http://localhost:5173",
                 "http://127.0.0.1:5173",
                 "https://checkyourresume.vercel.app",
+                "https://checkyourresume-backend.onrender.com",
             ],
             "methods": ["POST", "GET", "OPTIONS"],
             "allow_headers": ["Content-Type", "Accept"],
