@@ -6,7 +6,7 @@ export async function uploadResume(file: File, mode: string): Promise<{ analysis
     formData.append("file", file);
     formData.append("mode", mode);
 
-    const response = await fetch("https://checkyourresume-backend.vercel.app/", {
+    const response = await fetch("https://checkyourresume-backend.onrender.com", {
       method: "POST",
       body: formData,
     });
